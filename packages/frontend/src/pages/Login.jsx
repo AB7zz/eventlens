@@ -1,47 +1,47 @@
-
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom'
-import TopNav from '../components/TopNav';
+import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
+import { auth, signInWithEmailAndPassword } from '../../src/firebase/firebaseconfig'; // Adjust the import path as needed
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState(''); // To store error messages
+  const navigate = useNavigate(); // For redirection
 
-  const handleEmailChange = (e) => {
-    setEmail(e.target.value);
-  };
-  const handlePasswordChange = (e) => {
-    setPassword(e.target.value);
-  };
+  const handleEmailChange = (e) => setEmail(e.target.value);
+  const handlePasswordChange = (e) => setPassword(e.target.value);
 
   const isFormValid = email.trim() !== '' && password.trim() !== '';
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (isFormValid) {
-      console.log('Logging in with', { email, password });
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        navigate('/'); // Redirect after successful login
+      } catch (error) {
+        setError(error.message); // Set the error message to be displayed
+      }
     }
   };
 
-  const handleSignUpRedirect = () => {
-    
-  };
-
   return (
-    <div className="flex flex-col justify-center items-center  bg-gray-100 p-20">
+    <div className="flex flex-col justify-center items-center bg-gray-100 p-20">
       <div className="bg-white p-10 rounded-xl shadow-lg border border-purple-500 w-full max-w-md">
         <h1 className="text-2xl font-semibold text-purple-600 mb-6 text-center">Login</h1>
+        {error && <p className="text-red-500 text-sm mb-4">{error}</p>} {/* Display error message */}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
               id="email"
-              type="text"
+              type="email"
               placeholder="Email"
               value={email}
               onChange={handleEmailChange}
               className="block w-full p-3 rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+              required
             />
           </div>
           <div className="mb-6">
@@ -53,6 +53,7 @@ const Login = () => {
               value={password}
               onChange={handlePasswordChange}
               className="block w-full p-3 rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+              required
             />
           </div>
           <button
@@ -65,13 +66,12 @@ const Login = () => {
         </form>
         <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
           <a href="#" className="hover:text-purple-500">Forgot Password?</a>
-          <Link to='/Signup'>
-          <button
-            onClick={handleSignUpRedirect}
-            className="text-purple-500 hover:underline"
-          >
-            Don't have an account? Sign up
-          </button>
+          <Link to='/signup'>
+            <button
+              className="text-purple-500 hover:underline"
+            >
+              Don't have an account? Sign up
+            </button>
           </Link>
         </div>
       </div>
