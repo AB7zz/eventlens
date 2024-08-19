@@ -5,8 +5,7 @@ import BotNav from '../components/BotNav'
 const FaceScan = () => {
   return (
     <div>
-        <TopNav />
-        <BotNav />
+      Facescan
     </div>
   )
 }

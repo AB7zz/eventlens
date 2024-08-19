@@ -4,7 +4,7 @@ import TopNav from '../components/TopNav'
 const Signup = () => {
   return (
     <div>
-        <TopNav />
+      Signup
     </div>
   )
 }
