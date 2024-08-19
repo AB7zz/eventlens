@@ -32,7 +32,7 @@ const FaceCapture = () => {
   }, [webcamRef]);
 
   return (
-    <div className="relative flex justify-center items-center w-full h-screen bg-gray-900">
+    <div className="relative flex justify-center items-center w-full h-screen">
       <Webcam
         audio={false}
         ref={webcamRef}
