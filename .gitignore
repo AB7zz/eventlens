@@ -1,2 +1,5 @@
 node_modules
 *.env
+ssd_mobilenetv1_model.pb
+ssd_mobilenetv1_model-shard1
+ssd_mobilenetv1_model-shard2
