@@ -16,7 +16,8 @@ function App() {
             <Route path="/" element={<Login />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            <Route path="/facescan" element={<FaceScan />} />
+            <Route path="/facescan/:id" element={<FaceScan />} />
+            {/* <Route path="/facescan" element={<FaceScan />} /> */}
             <Route path="/upload" element={<Upload />} />
           </Routes>
         </Layout>

@@ -1,11 +1,21 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
+import axios from 'axios';
 
 const Upload = () => {
   const [images, setImages] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [qrCode, setQRCode] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState(null);
+  const [folderName, setFolderName] = useState('');
+
+  useEffect(() => {
+    // Generate random 5-letter string for folder name
+    const randomString = Math.random().toString(36).substring(2, 7).toUpperCase();
+    setFolderName(randomString);
+  }, []);
 
   const onDrop = useCallback((acceptedFiles) => {
     setImages((prevImages) => [
@@ -22,48 +32,73 @@ const Upload = () => {
     setImages((prevImages) => prevImages.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsSubmitting(true);
+    setUploadError(null);
+    setUploadProgress(0);
+
+    const formData = new FormData();
+    images.forEach((image) => {
+      formData.append('images', image);
+    });
+    formData.append('folderName', folderName);
+
+    try {
+      const response = await axios.post('http://localhost:5000/upload_images', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        },
+      });
+
+      console.log(response.data.message);
+      startProgressAnimation();
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      setUploadError('Failed to upload images. Please try again.');
+      setIsSubmitting(false);
+    }
   };
 
-  useEffect(() => {
-    if (isSubmitting) {
-      console.log('okayy')
-      const timer = setInterval(() => {
-        setProgress((prevProgress) => {
-          if (prevProgress >= 100) {
-            clearInterval(timer);
-            setTimeout(() => {
-              setQRCode(true)
-            }, 1000)
-            return 100;
-          }
-          return prevProgress + 1;
-        });
-      }, 50);
-
-      return () => clearInterval(timer);
-    }
-  }, [isSubmitting]);
+  const startProgressAnimation = () => {
+    const timer = setInterval(() => {
+      setProgress((prevProgress) => {
+        if (prevProgress >= 100) {
+          clearInterval(timer);
+          setTimeout(() => {
+            setQRCode(true);
+          }, 1000);
+          return 100;
+        }
+        return prevProgress + 1;
+      });
+    }, 50);
+  };
 
   const [copied, setCopied] = useState(false);
-  const link = 'https://localhost:5173/as723rn';
-
+  
+  const link = `https://localhost:5173/facescan/${folderName}`;
   const copyToClipboard = () => {
     navigator.clipboard.writeText(link).then(() => {
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000); // Reset copied state after 2 seconds
+      setTimeout(() => setCopied(false), 2000);
     });
   };
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
-      {!qrCode && images.length > 0 && <button 
-        onClick={handleSubmit} 
-        className="absolute z-[101] top-4 right-4 bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
-      >
-        Submit for analyzing
-      </button>}
+      {!qrCode && images.length > 0 && (
+        <button 
+          onClick={handleSubmit} 
+          className="absolute z-[101] top-4 right-4 bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Uploading...' : 'Submit for analyzing'}
+        </button>
+      )}
 
       <div className={`transition-transform duration-500 ease-in-out transform ${isSubmitting ? '-translate-x-full' : 'translate-x-0'}`}>
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
@@ -112,10 +147,17 @@ const Upload = () => {
             ></circle>
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-2xl font-bold">{Math.round(progress)}%</span>
+            <span className="text-2xl font-bold">{Math.round(isSubmitting ? uploadProgress : progress)}%</span>
           </div>
         </div>
       </div>
+
+      {uploadError && (
+        <div className="absolute top-4 left-4 bg-red-500 text-white p-2 rounded">
+          {uploadError}
+        </div>
+      )}
+
       <div className={`absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-500 ${qrCode ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         
         <div 
