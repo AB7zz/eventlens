@@ -86,8 +86,7 @@ const FaceCapture = () => {
 
   const handleRetry = () => {
     // Generate a new random string and navigate to a new URL
-    const newRandomString = Math.random().toString(36).substring(2, 7).toUpperCase();
-    navigate(`/${newRandomString}`);
+    navigate(`/facescan/${folderName}`);
     setCaptureComplete(false);
     setSimilarFaces([]);
   };

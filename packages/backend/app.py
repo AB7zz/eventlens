@@ -117,6 +117,8 @@ def find_similar_faces():
     
     # Filter similar images with similarity >= 0.6
     filtered_similar_images = [img for img in similar_images if img['similarity'] >= 0.6]
+
+    
     
     return jsonify({'similar_images': filtered_similar_images}), 200
 
