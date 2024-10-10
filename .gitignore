@@ -5,3 +5,4 @@ ssd_mobilenetv1_model-shard1
 ssd_mobilenetv1_model-shard2
 venv
 package-lock.json
+creds.json

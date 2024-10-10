@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
-import { auth, signInWithEmailAndPassword } from '../../src/firebase/firebaseconfig'; // Adjust the import path as needed
+import { auth, signInWithEmailAndPassword } from '../firebase/firebaseconfig.js'; // Adjust the import path as needed
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -15,6 +15,7 @@ const Login = () => {
 
   // Handle form submission
   const handleSubmit = async (e) => {
+    console.log('submit');
     e.preventDefault();
     if (isFormValid) {
       try {
