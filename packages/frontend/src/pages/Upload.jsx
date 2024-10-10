@@ -80,7 +80,7 @@ const Upload = () => {
 
   const [copied, setCopied] = useState(false);
   
-  const link = `https://localhost:5173/facescan/${folderName}`;
+  const link = `http://localhost:5173/facescan/${folderName}`;
   const copyToClipboard = () => {
     navigator.clipboard.writeText(link).then(() => {
       setCopied(true);
