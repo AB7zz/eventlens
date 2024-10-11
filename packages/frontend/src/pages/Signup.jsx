@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
-import { auth, createUserWithEmailAndPassword } from '../../src/firebase/firebaseconfig';
+import { auth, createUserWithEmailAndPassword } from '../firebase/firebaseconfig.js';
 
 const Signup = () => {
   const [email, setEmail] = useState('');
@@ -16,20 +16,23 @@ const Signup = () => {
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const isFormValid = isValidEmail(email) &&
-                      password.trim() !== '' &&
-                      confirmPassword.trim() !== '' &&
-                      password === confirmPassword;
+    password.trim() !== '' &&
+    confirmPassword.trim() !== '' &&
+    password === confirmPassword;
 
   const handleSubmit = async (e) => {
+
     e.preventDefault();
     if (isFormValid) {
       try {
+
         await createUserWithEmailAndPassword(auth, email, password);
+        console.log('submit');
         console.log('User created successfully');
         setEmail('');
         setPassword('');
         setConfirmPassword('');
-        navigate('/login'); 
+        navigate('/login');
       } catch (error) {
         setError(error.message);
       }
