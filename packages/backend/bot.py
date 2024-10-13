@@ -18,7 +18,7 @@ bot = telebot.TeleBot(TELEGRAM_API)
 # Initialize Firebase
 cred = credentials.Certificate(os.path.join(os.path.dirname(__file__), 'creds.json'))
 firebase_admin.initialize_app(cred, {
-    'storageBucket': os.getenv('FIREBASE_STORAGE_BUCKET')
+    'storageBucket': os.getenv('VITE_FIREBASE_STORAGE_BUCKET')
 })
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
