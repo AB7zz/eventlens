@@ -10,9 +10,13 @@ from firebase_admin import credentials, storage
 import matplotlib.pyplot as plt
 from io import BytesIO
 from dotenv import load_dotenv
+import telebot
 import base64
 
 load_dotenv()
+TELEGRAM_API = os.getenv('TELEGRAM_API')
+
+bot = telebot.TeleBot(TELEGRAM_API)
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -107,6 +111,13 @@ def upload_images():
     return jsonify({'message': f'{uploaded_count} images uploaded successfully'}), 200
 
 
+
+
+@bot.message_handler(commands=['start'])
+def start_command(message):
+    bot.send_message(message.chat.id, "Welcome! Please send me an image to find similar faces.")
+
+
 @app.route('/find_similar_faces', methods=['POST'])
 def find_similar_faces():
     if 'image' not in request.files:
@@ -131,10 +142,9 @@ def find_similar_faces():
     for face_embedding in face_embeddings:
         for filename, stored_embedding, stored_image in stored_embeddings:
             similarity = cosine_similarity(face_embedding, stored_embedding)
-            if similarity >= 0.6:  # Increased minimum similarity threshold to 0.6
+            if similarity >= 0.6:  # Minimum similarity threshold
                 # Convert image to base64 for JSON response
-                _, buffer = cv2.imencode('.jpg', cv2.cvtColor(
-                    stored_image, cv2.COLOR_RGB2BGR))
+                _, buffer = cv2.imencode('.jpg', cv2.cvtColor(stored_image, cv2.COLOR_RGB2BGR))
                 img_base64 = base64.b64encode(buffer).decode('utf-8')
                 similar_images.append({
                     'filename': filename,
@@ -146,11 +156,17 @@ def find_similar_faces():
     similar_images.sort(key=lambda x: x['similarity'], reverse=True)
 
     # Filter similar images with similarity >= 0.6
-    filtered_similar_images = [
-        img for img in similar_images if img['similarity'] >= 0.6]
+    filtered_similar_images = [img for img in similar_images if img['similarity'] >= 0.6]
+
+    for similar_image in filtered_similar_images:
+        img_io = BytesIO(base64.b64decode(similar_image['image']))
+        img_io.seek(0)
+        # Send each image to the Telegram chat
+        bot.send_photo(chat_id, img_io, caption=f"Filename: {similar_image['filename']}, Similarity: {similar_image['similarity']:.2f}")
 
     return jsonify({'similar_images': filtered_similar_images}), 200
 
 
-if __name__ == '__main__':
+
+if __name__ == '__main__':                                              
     app.run(debug=True)
