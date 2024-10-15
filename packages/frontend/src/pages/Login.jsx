@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
 import { auth, signInWithEmailAndPassword } from '../firebase/firebaseconfig.js'; // Adjust the import path as needed
+import { useUser } from '../context/StateContext.jsx';
+
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(''); // To store error messages
   const navigate = useNavigate(); // For redirection
+  const { loggedIn, setLoggedIn } = useUser()
 
   const handleEmailChange = (e) => setEmail(e.target.value);
   const handlePasswordChange = (e) => setPassword(e.target.value);
@@ -20,12 +23,19 @@ const Login = () => {
     if (isFormValid) {
       try {
         await signInWithEmailAndPassword(auth, email, password);
+        setLoggedIn(true)
         navigate('/upload'); // Redirect after successful login
       } catch (error) {
         setError(error.message); // Set the error message to be displayed
       }
     }
   };
+
+  useEffect(() => {
+    if(loggedIn){
+      navigate('/upload')
+    }
+  }, [loggedIn])
 
   return (
     <div className="flex flex-col justify-center items-center bg-gray-100 p-20">

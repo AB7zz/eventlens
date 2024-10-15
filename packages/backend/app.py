@@ -20,6 +20,7 @@ TELEGRAM_API = os.getenv('TELEGRAM_API')
 bot = telebot.TeleBot(TELEGRAM_API)
 
 app = Flask(__name__)
+
 CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 
 cred = credentials.Certificate(

@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
 import { auth, createUserWithEmailAndPassword } from '../firebase/firebaseconfig.js';
+import { useUser } from '../context/StateContext.jsx';
 
 const Signup = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const { loggedIn, setLoggedIn } = useUser()
   const navigate = useNavigate();
 
   const handleEmailChange = (e) => setEmail(e.target.value);
@@ -40,6 +42,12 @@ const Signup = () => {
       setError('Please enter a valid email and matching passwords.');
     }
   };
+
+  useEffect(() => {
+    if(loggedIn){
+      navigate('/upload')
+    }
+  }, [loggedIn])
 
   return (
     <div className="flex flex-col justify-center items-center bg-gray-100 p-14">
