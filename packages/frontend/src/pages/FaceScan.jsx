@@ -110,6 +110,24 @@ const FaceCapture = () => {
     setIsApiDisabled(e.target.value.trim() === ""); // Disable button if Telegram ID is empty
   };
 
+  // Download handler
+  const handleDownload = (event, index) => {
+    event.preventDefault();
+    const face = similarFaces[index];
+
+    // Create a blob from the base64 data
+    const base64Image = face.image;
+    const blob = new Blob([Uint8Array.from(atob(base64Image), c => c.charCodeAt(0))], { type: 'image/jpeg' });
+
+    // Create a link to download the blob
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `similar_face_${index + 1}.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="relative flex flex-col justify-center items-center w-full min-h-screen bg-gray-100 p-4">
       <h1 className="text-3xl font-bold mb-8 text-gray-800">Face Recognition</h1>
@@ -182,11 +200,12 @@ const FaceCapture = () => {
               {similarFaces.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {similarFaces.map((face, index) => (
-                    <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden flex justify-center items-center flex-col">
                       <img src={`data:image/jpeg;base64,${face.image}`} alt={`Similar face ${index + 1}`} className="w-full h-48 object-cover" />
                       <div className="p-2">
                         <p className="text-sm font-semibold text-gray-700">Similarity: {(face.similarity * 100).toFixed(2)}%</p>
                       </div>
+                      <button className='px-4 py-2 w-full text-white bg-blue-950' onClick={(event) => handleDownload(event, index)}>Download</button>
                     </div>
                   ))}
                 </div>
