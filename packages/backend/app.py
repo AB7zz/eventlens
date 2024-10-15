@@ -19,8 +19,7 @@ TELEGRAM_API = os.getenv('TELEGRAM_API')
 bot = telebot.TeleBot(TELEGRAM_API)
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
-
+CORS(app) 
 cred = credentials.Certificate(
     os.path.join(os.path.dirname(__file__), 'creds.json')
 )
