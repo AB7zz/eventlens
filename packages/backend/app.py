@@ -191,8 +191,8 @@ def find_similar_faces():
     filtered_similar_images = [img for img in similar_images if img['similarity'] >= 0.6]
 
     chat_id = data.get('telegramID')
-    print(chat_id)
     if chat_id:
+        print(chat_id)
         for similar_image in filtered_similar_images:
             img_io = BytesIO(base64.b64decode(similar_image['image']))
             img_io.seek(0)

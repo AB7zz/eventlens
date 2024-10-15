@@ -76,7 +76,7 @@ const FaceCapture = () => {
       const payload = {
         image: capturedImage, // The base64 image string
         folderName: folderName,
-        telegramID: telegramID // The Telegram ID
+        telegramID: telegramID ?? "" // The Telegram ID
       };
 
       console.log(payload, "formdata");
@@ -182,6 +182,11 @@ const FaceCapture = () => {
                   className={`w-full px-4 py-2 h-14  bg-blue-800 text-white rounded-lg hover:bg-blue-600 focus:outline-none ${isApiDisabled ? 'opacity-80 cursor-not-allowed' : ''}`}
                 >
                   Send Photos via telegram
+                </button> <button
+                  onClick={handleSendImages}
+                  className={`w-full px-4 py-2 h-14  bg-blue-800 text-white rounded-lg hover:bg-blue-600 focus:outline-none`}
+                >
+                  View photos
                 </button>
                 </div>
               </div>
