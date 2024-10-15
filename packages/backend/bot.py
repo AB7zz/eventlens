@@ -64,6 +64,7 @@ def load_images_from_firebase_storage(folder_name):
 
 @bot.message_handler(commands=['start'])
 def start_command(message):
+    print(message.chat.id)
     bot.send_message(message.chat.id, "Welcome! Please send me an image to find similar faces.")
 
 @bot.message_handler(content_types=['photo'])
@@ -107,6 +108,7 @@ def find_similar_faces_handler(message):
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
+    print(message.chat.id)
     bot.reply_to(message, "Please send an image to find similar faces.")
 
 if __name__ == '__main__':
