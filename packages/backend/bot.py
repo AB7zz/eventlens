@@ -108,6 +108,7 @@ def find_similar_faces_handler(message):
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
+    print(message.chat.id)
     bot.reply_to(message, "Please send an image to find similar faces.")
 
 if __name__ == '__main__':
