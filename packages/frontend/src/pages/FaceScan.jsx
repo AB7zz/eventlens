@@ -15,6 +15,10 @@ const FaceCapture = () => {
   const [similarFaces, setSimilarFaces] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [captureComplete, setCaptureComplete] = useState(false);
+  const [capturedImage, setCapturedImage] = useState(null); // State to store the captured image
+  const [showModal, setShowModal] = useState(false); // For showing the modal
+  const [telegramID, setTelegramID] = useState(''); // To store Telegram ID
+  const [isApiDisabled, setIsApiDisabled] = useState(true); // To disable API button until Telegram ID is provided
 
   useEffect(() => {
     // Load face detection model
@@ -53,6 +57,7 @@ const FaceCapture = () => {
       if (detection && detection._score > 0.8) {
         console.log("Face detected:", detection);
         setFaceDetected(true);
+        setCapturedImage(image); // Save the captured image in the state
       } else {
         console.log("No face detected");
         setFaceDetected(false);
@@ -60,35 +65,67 @@ const FaceCapture = () => {
     }
   };
 
-  const handleCaptureClick = async () => {
-    setIsLoading(true);
+  const handleCaptureClick = () => {
     setCaptureComplete(true);
-    if (webcamRef.current) {
-      const imageSrc = webcamRef.current.getScreenshot();
-      const blob = await fetch(imageSrc).then(res => res.blob());
-      
-      const formData = new FormData();
-      formData.append('image', blob, 'snapshot.jpg');
-      formData.append('folderName', folderName);
+    setShowModal(true); // Open the modal after capture
+  };
+
+  const handleSendImages = async () => {
+    setIsLoading(true);
+    if (capturedImage) {
+      const payload = {
+        image: capturedImage, // The base64 image string
+        folderName: folderName,
+        telegramID: telegramID ?? "" // The Telegram ID
+      };
+
+      console.log(payload, "formdata");
 
       try {
-        const response = await axios.post('http://localhost:5000/find_similar_faces', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
+        const response = await axios.post('http://localhost:5000/find_similar_faces', payload, {
+          headers: { 
+            "Content-Type": "application/json" ,
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,PATCH,OPTIONS"}
         });
+        console.log("face scan post ay");
         setSimilarFaces(response.data.similar_images);
       } catch (error) {
         console.error('Error finding similar faces:', error);
       } finally {
         setIsLoading(false);
+        setShowModal(false); // Close the modal
       }
     }
   };
 
   const handleRetry = () => {
-    // Generate a new random string and navigate to a new URL
     navigate(`/facescan/${folderName}`);
     setCaptureComplete(false);
     setSimilarFaces([]);
+  };
+
+  const handleTelegramIDChange = (e) => {
+    setTelegramID(e.target.value);
+    setIsApiDisabled(e.target.value.trim() === ""); // Disable button if Telegram ID is empty
+  };
+
+  // Download handler
+  const handleDownload = (event, index) => {
+    event.preventDefault();
+    const face = similarFaces[index];
+
+    // Create a blob from the base64 data
+    const base64Image = face.image;
+    const blob = new Blob([Uint8Array.from(atob(base64Image), c => c.charCodeAt(0))], { type: 'image/jpeg' });
+
+    // Create a link to download the blob
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `similar_face_${index + 1}.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -123,34 +160,71 @@ const FaceCapture = () => {
             </button>
           )}
         </div>
-      ) : isLoading ? (
-        <div className="flex flex-col items-center">
-          <ClipLoader color="#4A90E2" size={50} />
-          <p className="mt-4 text-xl text-gray-600">Finding similar faces...</p>
-        </div>
       ) : (
-        <div className="w-full max-w-4xl">
-          <h2 className="text-2xl font-bold mb-4 text-gray-800">Similar Faces:</h2>
-          {similarFaces.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {similarFaces.map((face, index) => (
-                <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
-                  <img src={`data:image/jpeg;base64,${face.image}`} alt={`Similar face ${index + 1}`} className="w-full h-48 object-cover" />
-                  <div className="p-2">
-                    <p className="text-sm font-semibold text-gray-700">Similarity: {(face.similarity * 100).toFixed(2)}%</p>
-                  </div>
+        <div>
+          {/* Modal for Telegram ID input */}
+          {showModal && (
+            <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
+              <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+                <h2 className="text-xl font-bold mb-4">Send Photos via Telegram</h2>
+                <p className="mb-4">Enter your Telegram ID to receive the photos via WhatsApp bot:</p>
+                <input
+                  type="text"
+                  placeholder="Enter Telegram ID"
+                  value={telegramID}
+                  onChange={handleTelegramIDChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4"
+                />
+                <div className='flex flex-col justify-center gap-2 items-center'>
+                <button
+                  onClick={handleSendImages}
+                  disabled={isApiDisabled}
+                  className={`w-full px-4 py-2 h-14  bg-blue-800 text-white rounded-lg hover:bg-blue-600 focus:outline-none ${isApiDisabled ? 'opacity-80 cursor-not-allowed' : ''}`}
+                >
+                  Send Photos via telegram
+                </button> <button
+                  onClick={handleSendImages}
+                  className={`w-full px-4 py-2 h-14  bg-blue-800 text-white rounded-lg hover:bg-blue-600 focus:outline-none`}
+                >
+                  View photos
+                </button>
                 </div>
-              ))}
+              </div>
+            </div>
+          )}
+
+          {/* Loading or displaying similar faces */}
+          {isLoading ? (
+            <div className="flex flex-col items-center">
+              <ClipLoader color="#4A90E2" size={50} />
+              <p className="mt-4 text-xl text-gray-600">Finding similar faces...</p>
             </div>
           ) : (
-            <p className="text-xl text-gray-600">No similar faces found.</p>
+            <div className="w-full max-w-4xl">
+              <h2 className="text-2xl font-bold mb-4 text-gray-800">Similar Faces:</h2>
+              {similarFaces.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {similarFaces.map((face, index) => (
+                    <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden flex justify-center items-center flex-col">
+                      <img src={`data:image/jpeg;base64,${face.image}`} alt={`Similar face ${index + 1}`} className="w-full h-48 object-cover" />
+                      <div className="p-2">
+                        <p className="text-sm font-semibold text-gray-700">Similarity: {(face.similarity * 100).toFixed(2)}%</p>
+                      </div>
+                      <button className='px-4 py-2 w-full text-white bg-blue-950' onClick={(event) => handleDownload(event, index)}>Download</button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xl text-gray-600">No similar faces found.</p>
+              )}
+              <button
+                className="mt-8 px-8 py-3 bg-gray-500 text-white rounded-full shadow-lg hover:bg-gray-600 focus:outline-none transition-colors duration-300"
+                onClick={handleRetry}
+              >
+                Try Again
+              </button>
+            </div>
           )}
-          <button
-            className="mt-8 px-8 py-3 bg-gray-500 text-white rounded-full shadow-lg hover:bg-gray-600 focus:outline-none transition-colors duration-300"
-            onClick={handleRetry}
-          >
-            Try Again
-          </button>
         </div>
       )}
     </div>

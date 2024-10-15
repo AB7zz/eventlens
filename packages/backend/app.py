@@ -12,6 +12,7 @@ from io import BytesIO
 from dotenv import load_dotenv
 import telebot
 import base64
+import certifi
 
 load_dotenv()
 TELEGRAM_API = os.getenv('TELEGRAM_API')
@@ -19,7 +20,9 @@ TELEGRAM_API = os.getenv('TELEGRAM_API')
 bot = telebot.TeleBot(TELEGRAM_API)
 
 app = Flask(__name__)
-CORS(app) 
+
+CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+
 cred = credentials.Certificate(
     os.path.join(os.path.dirname(__file__), 'creds.json')
 )
@@ -119,22 +122,53 @@ def start_command(message):
 
 @app.route('/find_similar_faces', methods=['POST'])
 def find_similar_faces():
-    if 'image' not in request.files:
+    data  = request.json
+
+    # Check if 'image' is in the JSON payload
+    if 'image' not in data:
         return jsonify({'error': 'No image provided'}), 400
 
-    folder_name = request.form.get('folderName')
+    folder_name = data.get('folderName')
     if not folder_name:
         return jsonify({'error': 'No folderName provided'}), 400
 
-    input_image = request.files['image'].read()
-    nparr = np.frombuffer(input_image, np.uint8)
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    try:
+        # Extract the base64 image string
+        img_data = data['image']
+        
+        # Remove the header if present (e.g., "data:image/jpeg;base64,")
+        if "base64," in img_data:
+            img_data = img_data.split("base64,")[1]
 
+        # Decode the base64 image to bytes
+        img_bytes = base64.b64decode(img_data)
+        
+        # Convert the bytes to a NumPy array
+        nparr = np.frombuffer(img_bytes, np.uint8)
+        
+        # Decode the image using OpenCV
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        # Ensure the image was successfully decoded
+        if img is None:
+            return jsonify({'error': 'Decoded image is empty or invalid'}), 400
+
+        # Convert the image from BGR to RGB (if needed)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+        # Process the image for face detection here...
+        # Your face embedding logic will go here...
+
+    except Exception as e:
+        # Return detailed error if there's an issue with decoding or processing the image
+        return jsonify({'error': 'Invalid image data', 'details': str(e)}), 400
+
+    # Extract face embeddings from the input image
     face_embeddings = extract_face_embeddings(img)
     if face_embeddings is None:
         return jsonify({'error': 'No face detected in the input image'}), 400
 
+    # Load embeddings from Firebase Storage for the given folder
     stored_embeddings = load_images_from_firebase_storage(folder_name)
 
     similar_images = []
@@ -157,14 +191,16 @@ def find_similar_faces():
     # Filter similar images with similarity >= 0.6
     filtered_similar_images = [img for img in similar_images if img['similarity'] >= 0.6]
 
-    for similar_image in filtered_similar_images:
-        img_io = BytesIO(base64.b64decode(similar_image['image']))
-        img_io.seek(0)
-        # Send each image to the Telegram chat
-        bot.send_photo(chat_id, img_io, caption=f"Filename: {similar_image['filename']}, Similarity: {similar_image['similarity']:.2f}")
+    chat_id = data.get('telegramID')
+    if chat_id:
+        print(chat_id)
+        for similar_image in filtered_similar_images:
+            img_io = BytesIO(base64.b64decode(similar_image['image']))
+            img_io.seek(0)
+            # Send each image to the Telegram chat using the bot
+            bot.send_photo("915394841", img_io, caption=f"Filename: {similar_image['filename']}, Similarity: {similar_image['similarity']:.2f}")
 
     return jsonify({'similar_images': filtered_similar_images}), 200
-
 
 
 if __name__ == '__main__':                                  
