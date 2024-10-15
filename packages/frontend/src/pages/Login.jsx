@@ -20,7 +20,7 @@ const Login = () => {
     if (isFormValid) {
       try {
         await signInWithEmailAndPassword(auth, email, password);
-        navigate('/'); // Redirect after successful login
+        navigate('/upload'); // Redirect after successful login
       } catch (error) {
         setError(error.message); // Set the error message to be displayed
       }
