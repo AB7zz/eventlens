@@ -43,6 +43,8 @@ const Upload = () => {
     });
     formData.append('folderName', folderName);
 
+    console.log(formData)
+
     try {
       const response = await axios.post('http://localhost:5000/upload_images', formData, {
         headers: {
@@ -79,7 +81,7 @@ const Upload = () => {
   };
 
   const [copied, setCopied] = useState(false);
-  
+
   const link = `http://localhost:5173/facescan/${folderName}`;
   const copyToClipboard = () => {
     navigator.clipboard.writeText(link).then(() => {
@@ -91,8 +93,8 @@ const Upload = () => {
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {!qrCode && images.length > 0 && (
-        <button 
-          onClick={handleSubmit} 
+        <button
+          onClick={handleSubmit}
           className="absolute z-[101] top-4 right-4 bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
           disabled={isSubmitting}
         >
@@ -159,29 +161,29 @@ const Upload = () => {
       )}
 
       <div className={`absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-500 ${qrCode ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        
-        <div 
+
+        <div
           className='bg-purple-500 text-white signika px-5 py-2 rounded flex items-center cursor-pointer'
           onClick={copyToClipboard}
         >
           <span className="mr-2">{link}</span>
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            className="h-5 w-5" 
-            fill="none" 
-            viewBox="0 0 24 24" 
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
             stroke="currentColor"
           >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" 
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
             />
           </svg>
         </div>
         {copied && <span className="ml-2 text-green-500">Copied!</span>}
-        
+
         <div className="bg-white p-8 rounded-lg">
           <img src="/qrcode.webp" alt="QR Code" className="w-80 h-80" />
         </div>
