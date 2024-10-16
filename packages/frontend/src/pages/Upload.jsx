@@ -11,11 +11,10 @@ const Upload = () => {
   const [uploadError, setUploadError] = useState(null);
   const [folderName, setFolderName] = useState('');
 
-  useEffect(() => {
-    // Generate random 5-letter string for folder name
-    const randomString = Math.random().toString(36).substring(2, 7).toUpperCase();
-    setFolderName(randomString);
-  }, []);
+  // useEffect(() => {
+  //   const randomString = Math.random().toString(36).substring(2, 7).toUpperCase();
+  //   setFolderName(randomString);
+  // }, []);
 
   const onDrop = useCallback((acceptedFiles) => {
     setImages((prevImages) => [
@@ -93,13 +92,16 @@ const Upload = () => {
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {!qrCode && images.length > 0 && (
-        <button
-          onClick={handleSubmit}
-          className="absolute z-[101] top-4 right-4 bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? 'Uploading...' : 'Submit for analyzing'}
-        </button>
+        <>
+          <input onChange={(e) => setFolderName(e.target.value)} placeholder="Enter folder name" className="absolute z-[101] top-4 left-4 bg-white p-2 rounded" />
+          <button
+            onClick={handleSubmit}
+            className="absolute z-[101] top-4 right-4 bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Uploading...' : 'Submit for analyzing'}
+          </button>
+        </>
       )}
 
       <div className={`transition-transform duration-500 ease-in-out transform ${isSubmitting ? '-translate-x-full' : 'translate-x-0'}`}>
@@ -118,7 +120,7 @@ const Upload = () => {
                 <img src={image.preview} alt={image.name} className="w-44 h-44 object-cover rounded" />
                 <button onClick={() => removeImage(index)} className="absolute top-1 right-1 bg-white bg-opacity-70 rounded-full w-6 h-6 flex items-center justify-center text-gray-600 hover:text-gray-800">
                   ×
-                </button>
+                </button>l
               </div>
             ))}
           </div>

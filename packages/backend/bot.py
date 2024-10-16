@@ -8,7 +8,6 @@ from io import BytesIO
 from dotenv import load_dotenv
 import firebase_admin
 from firebase_admin import credentials, storage
-import base64
 
 load_dotenv()
 TELEGRAM_API = os.getenv('TELEGRAM_API')
@@ -16,7 +15,8 @@ TELEGRAM_API = os.getenv('TELEGRAM_API')
 bot = telebot.TeleBot(TELEGRAM_API)
 
 # Initialize Firebase
-cred = credentials.Certificate(os.path.join(os.path.dirname(__file__), 'creds.json'))
+cred = credentials.Certificate(os.path.join(
+    os.path.dirname(__file__), 'creds.json'))
 firebase_admin.initialize_app(cred, {
     'storageBucket': os.getenv('VITE_FIREBASE_STORAGE_BUCKET')
 })
@@ -25,6 +25,10 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 resnet = InceptionResnetV1(pretrained='vggface2').eval().to(device)
 mtcnn = MTCNN(keep_all=True, device=device)
 
+# Dictionary to store folder names for each user
+user_folders = {}
+
+
 def extract_face_embeddings(image):
     faces = mtcnn(image)
     if faces is not None and len(faces) > 0:
@@ -32,6 +36,7 @@ def extract_face_embeddings(image):
         return embeddings
     else:
         return None
+
 
 def cosine_similarity(embedding1, embedding2):
     embedding1_np = embedding1.detach().cpu().numpy()
@@ -42,11 +47,6 @@ def cosine_similarity(embedding1, embedding2):
     similarity = dot_product / (norm1 * norm2)
     return float(similarity)
 
-def upload_image_to_firebase_storage(image, folder_name, filename):
-    bucket = storage.bucket()
-    blob = bucket.blob(f'{folder_name}/{filename}')
-    blob.upload_from_string(image, content_type='image/jpeg')
-    return blob.public_url
 
 def load_images_from_firebase_storage(folder_name):
     bucket = storage.bucket()
@@ -62,14 +62,27 @@ def load_images_from_firebase_storage(folder_name):
             embeddings.append((blob.name, embedding.mean(dim=0), image))
     return embeddings
 
+
 @bot.message_handler(commands=['start'])
 def start_command(message):
-    print(message.chat.id)
-    bot.send_message(message.chat.id, "Welcome! Please send me an image to find similar faces.")
+    bot.reply_to(message, "Welcome! Please send me the folder name.")
+    bot.register_next_step_handler(message, save_folder_name)
+
+
+def save_folder_name(message):
+    user_folders[message.chat.id] = message.text
+    bot.reply_to(
+        message, f"Folder name '{message.text}' saved. Please send an image to find similar faces.")
+
 
 @bot.message_handler(content_types=['photo'])
 def find_similar_faces_handler(message):
-    folder_name = 'telegram_photos'
+    if message.chat.id not in user_folders:
+        bot.reply_to(
+            message, "Please start the conversation with /start and provide a folder name first.")
+        return
+
+    folder_name = user_folders[message.chat.id]
     file_info = bot.get_file(message.photo[-1].file_id)
     downloaded_file = bot.download_file(file_info.file_path)
 
@@ -79,7 +92,8 @@ def find_similar_faces_handler(message):
 
     face_embeddings = extract_face_embeddings(img)
     if face_embeddings is None:
-        bot.reply_to(message, "No face detected in the image. Please try another image.")
+        bot.reply_to(
+            message, "No face detected in the image. Please try another image.")
         return
 
     stored_embeddings = load_images_from_firebase_storage(folder_name)
@@ -102,14 +116,17 @@ def find_similar_faces_handler(message):
             img_io.write(buffer)
             img_io.seek(0)
 
-            bot.send_photo(message.chat.id, img_io, caption=f"Similarity: {similarity:.2f}")
+            bot.send_photo(message.chat.id, img_io,
+                           caption=f"Similarity: {similarity:.2f}")
     else:
         bot.reply_to(message, "No similar faces found.")
 
+
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
-    print(message.chat.id)
-    bot.reply_to(message, "Please send an image to find similar faces.")
+    bot.reply_to(
+        message, "Please use /start to begin the process, or send an image to find similar faces.")
+
 
 if __name__ == '__main__':
     bot.polling()
