@@ -1,8 +1,8 @@
 # EventLens
 
-**An intelligent face recognition platform for automated event attendee identification and matching.**
+**An AI-powered photo discovery platform that helps event attendees instantly find their photos.**
 
-EventLens is a full-stack application that leverages deep learning to streamline attendee tracking at events. By combining real-time face detection with powerful neural network-based matching, EventLens enables instant identification of participants and automatic notification delivery.
+EventLens revolutionizes event photography by using deep learning face recognition to match attendees with their photos. Photographers upload event photos, generate a shareable link, and attendees simply scan their face to instantly receive all photos they appear in - no more scrolling through hundreds of images!
 
 🔗 **Live Demo:** [eventlens.netlify.app](https://eventlens.netlify.app/)
 
@@ -10,17 +10,19 @@ EventLens is a full-stack application that leverages deep learning to streamline
 
 ## Overview
 
-EventLens implements a sophisticated hybrid machine learning architecture that processes faces both client-side and server-side for optimal performance and accuracy. Users can capture their face via webcam, and the system automatically matches against a database of registered attendees, delivering results through Telegram integration.
+EventLens implements a sophisticated hybrid machine learning architecture that processes faces both client-side and server-side for optimal performance and accuracy. Photographers upload event photos to the platform, which automatically extracts and stores face embeddings. Attendees visit the event link, scan their face via webcam, and the system instantly identifies and delivers all matching photos through an intuitive interface or via Telegram.
 
 ## Key Features
 
-- **Real-Time Face Detection**: Browser-based face capture using TensorFlow.js and Face-api.js
-- **Deep Learning Recognition**: Server-side face embedding extraction using FaceNet (InceptionResnetV1)
-- **Accurate Matching**: Cosine similarity-based matching with 0.6 threshold for reliable identification
+- **Photographer Upload**: Bulk upload event photos and generate shareable event links
+- **Face Scan Search**: Attendees scan their face via webcam to find their photos instantly
+- **Real-Time Detection**: Browser-based face capture using TensorFlow.js and Face-api.js
+- **Deep Learning Matching**: FaceNet (InceptionResnetV1) extracts 128-dimensional embeddings for accurate photo matching
+- **Smart Recognition**: Cosine similarity-based matching with 0.6 threshold for reliable results
 - **GPU Acceleration**: PyTorch-powered inference with CUDA support for fast processing
 - **Cloud Storage**: Firebase Storage integration for scalable image and embedding management
-- **Instant Notifications**: Telegram bot integration for asynchronous result delivery
-- **Modern UI**: Responsive React-based frontend with real-time webcam feed
+- **Telegram Delivery**: Optional bot integration to send matched photos directly to attendees
+- **Modern UI**: Responsive React-based frontend with intuitive photo gallery
 
 ## Technology Stack
 
@@ -46,42 +48,84 @@ EventLens implements a sophisticated hybrid machine learning architecture that p
 
 ## How It Works
 
-1. **Face Capture**: User allows webcam access; TensorFlow.js detects faces in real-time with 0.8 confidence threshold
-2. **Image Upload**: Captured face image (Base64) sent to Flask backend API
-3. **Face Detection**: MTCNN detects and extracts faces from the uploaded image
-4. **Embedding Extraction**: InceptionResnetV1 generates 128-dimensional face embeddings
-5. **Similarity Matching**: Cosine similarity computed against stored embeddings in Firebase
-6. **Result Delivery**: Matching faces (similarity ≥ 0.6) returned and optionally sent via Telegram
-7. **Display**: Results presented in an organized grid format on the frontend
+### For Photographers:
+1. **Upload Photos**: Bulk upload event photos to the platform
+2. **Face Extraction**: System automatically detects faces in all uploaded photos using MTCNN
+3. **Embedding Generation**: InceptionResnetV1 generates 128-dimensional embeddings for each detected face
+4. **Storage**: Photos and embeddings stored in Firebase Storage
+5. **Share Link**: Unique event link generated and shared with all attendees
+
+### For Attendees:
+1. **Visit Event Link**: Open the photographer's shared event link
+2. **Face Scan**: Allow webcam access; TensorFlow.js detects face in real-time (0.8 confidence threshold)
+3. **Upload**: Captured face image (Base64) sent to Flask backend API
+4. **Matching**: Cosine similarity computed between attendee's face and all stored photo embeddings
+5. **Results**: All photos with matching faces (similarity ≥ 0.6) returned instantly
+6. **Download/Share**: View matched photos in grid format, download, or receive via Telegram bot
 
 ## Architecture
 
 ```
-┌─────────────────┐
-│  React Frontend │
-│  (TensorFlow.js)│
-│  Face Detection │
-└────────┬────────┘
+PHOTOGRAPHER WORKFLOW:
+┌──────────────────┐
+│ Upload Event     │
+│ Photos (Bulk)    │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│ Flask Backend    │
+│ Face Detection   │
+│ (MTCNN)          │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│ FaceNet Model    │
+│ Extract Embeddings
+│ (InceptionResnet)│
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│ Firebase Storage │
+│ Store Photos +   │
+│ Embeddings       │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│ Generate Event   │
+│ Shareable Link   │
+└──────────────────┘
+
+ATTENDEE WORKFLOW:
+┌──────────────────┐
+│ Visit Event Link │
+│ Scan Face        │
+│ (TensorFlow.js)  │
+└────────┬─────────┘
          │ Base64 Image
          ▼
-┌─────────────────┐
-│  Flask Backend  │
-│  (PyTorch GPU)  │
-│  FaceNet Model  │
-└────────┬────────┘
-         │ Embeddings
+┌──────────────────┐
+│ Flask Backend    │
+│ Extract Face     │
+│ Embedding        │
+└────────┬─────────┘
+         │
          ▼
-┌─────────────────┐
-│ Firebase Storage│
-│ Cosine Similarity
-│    Matching     │
-└────────┬────────┘
-         │ Matches
+┌──────────────────┐
+│ Cosine Similarity│
+│ Match Against    │
+│ Event Photos     │
+└────────┬─────────┘
+         │
          ▼
-┌─────────────────┐
-│  Telegram Bot   │
-│ Result Delivery │
-└─────────────────┘
+┌──────────────────┐
+│ Return Matched   │
+│ Photos + Option  │
+│ Telegram Delivery│
+└──────────────────┘
 ```
 
 ## Machine Learning Models
@@ -129,19 +173,22 @@ eventlens/
 
 ## Use Cases
 
-- Event check-ins and attendee tracking
-- Conference registration and networking
-- Security and access control
-- Automated photo organization
-- Group event photo matching
+- **Wedding Photography**: Guests scan their face to instantly receive all their wedding photos
+- **Conference & Corporate Events**: Attendees find professional photos from networking sessions and presentations
+- **Sports Events**: Participants discover action shots featuring themselves
+- **School Events**: Parents/students find photos from graduations, sports days, and school functions
+- **Party Photography**: Event-goers retrieve their photos without scrolling through hundreds of images
+- **Professional Photoshoots**: Group events where individuals want only their specific photos
 
 ## Future Enhancements
 
-- Multi-face detection and batch processing
-- Enhanced matching algorithms (triplet loss, ArcFace)
-- Real-time video stream processing
-- Advanced analytics and attendance reports
-- Mobile application development
+- **Multi-face Detection**: Support finding photos with multiple people (e.g., "find photos with me and my friends")
+- **Enhanced Matching**: Implement triplet loss and ArcFace for improved accuracy
+- **Photo Filters**: Allow photographers to organize photos by sessions, locations, or time
+- **Analytics Dashboard**: Provide photographers insights on photo views and downloads
+- **Mobile App**: Native iOS/Android apps for easier photo access
+- **Payment Integration**: Enable paid photo downloads for professional photographers
+- **Album Creation**: Auto-generate personalized photo albums for attendees
 
 ## Contributing
 
@@ -153,4 +200,4 @@ This project is available for educational and portfolio purposes.
 
 ---
 
-**Built with deep learning and modern web technologies to make event management smarter.**
+**Built with deep learning and modern web technologies to make event photography effortless.**
